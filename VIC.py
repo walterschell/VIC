@@ -6,7 +6,72 @@ class IntKey:
         spot = 0
         while len(self._key) < size:
             self._key.append((_key[spot] + _key[spot+1]) % 10)
+    def __getitem__(self, index):
+        return self._key[index]
+    @classmethod
+    def from_number_string(cls, numbers):
+        result = IntKey()
+        for i in numbers:
+            result._key.append(int(i))
+        return result
+    def __str__(self):
+        result = ''
+        for i in self._key:
+            result += '%d' % i
+        return result
+class StraddlingCheckerboard:
+    def __init__(self, key, rows=None):
+        self.key = key
+        if rows is None:
+            rows = ['ESTONIAR  ', #Vowels to encode with one number
+                    'BCDFGHJKLM', #First row of leftovers
+                    'PQUVWXYZ.#'] #Second row of leftovers
+        self.rows = rows
 
+    def decode(self, msg):
+        keymap = {}
+        for i in range(10):
+            keymap[self.key[i]] = i
+        result = ''
+        i = 0
+        while i < len(msg):
+            ci = int(msg[i])
+            c = ''
+            if ci == self.key[-1]:
+                i += 1
+                c = self.rows[2][keymap[int(msg[i])]]
+            elif ci == self.key[-2]:
+                i += 1
+                c = self.rows[1][keymap[int(msg[i])]]
+            else:
+                c = self.rows[0][keymap[ci]]
+            result += c
+            i += 1
+        return result
+    def encode(self, msg):
+        result = ''
+        for c in msg.upper():
+            symbol = None
+            try:
+                symbol = str(self.key[self.rows[0].index(c)])
+            except: pass
+            try:
+                 
+                symbol = str(self.key[-2]) + str(self.key[self.rows[1].index(c)])
+            except: pass
+            try:
+                symbol = str(self.key[-1]) + str(self.key[self.rows[2].index(c)])
+            except: pass
+            result += symbol
+        return result
+    def __str__(self):
+        result = 'Checkerboard below\n'
+        result += '_|' + '|'.join(str(self.key)) + '\n'
+        result += '=====================' + '\n'
+        result += ' |' + '|'.join(self.rows[0]) + '\n'
+        result += str(self.key[-2]) + '|' + '|'.join(self.rows[1]) + '\n'
+        result += str(self.key[-1]) + '|' + '|'.join(self.rows[2])
+        return result
 def sequentialize(phrase, modreduce=True):
     result_prime = [None] * len(phrase)
     pre_sorted = [None] * len(phrase)
@@ -44,9 +109,23 @@ def test_sequentialize(verbose):
             log('Sequentialize: PASS')
     return passed
 
-
+def test_checkerboard(verbose=True):
+    key = IntKey.from_number_string('1234567890')
+    board = StraddlingCheckerboard(key)
+    log(str(board))
+    test_phrase = 'THEQUICKBROWNFOXJUMPEDOVERTHELAZYDOG'
+    log(test_phrase)
+    ct = board.encode(test_phrase)
+    log(ct)
+    pt = board.decode(ct)
+    log(pt)
+all_tests = [
+         test_sequentialize,
+         test_checkerboard
+         ]
 def testall(verbose=True):
-    test_sequentialize(verbose)
+    for test in all_tests:
+        test(verbose)
 
 testall()
 
