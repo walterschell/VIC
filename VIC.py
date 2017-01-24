@@ -8,6 +8,8 @@ class IntKey:
             self._key.append((_key[spot] + _key[spot+1]) % 10)
     def __getitem__(self, index):
         return self._key[index]
+    def __len__(self):
+        return len(self._key)
     @classmethod
     def from_number_string(cls, numbers):
         result = IntKey()
@@ -72,6 +74,43 @@ class StraddlingCheckerboard:
         result += str(self.key[-2]) + '|' + '|'.join(self.rows[1]) + '\n'
         result += str(self.key[-1]) + '|' + '|'.join(self.rows[2])
         return result
+
+
+class Transposition:
+    def __init__(self, key):
+        self.key = key
+    def get_key_order(self):
+        result = []
+        for i in range(1,len(self.key)+1):
+            for offset in range(len(self.key)):
+                if self.key[offset] == i:
+                    result.append(offset)
+        return result
+
+    def show_encode(self, msg):
+        row_strs = []
+        for i in range(len(self.key)):
+            row_strs.append('%02d' % self.key[i])
+        print '|'.join(row_strs)
+        offset = 0
+        while offset < len(msg):
+            row_strs = []
+            for c in msg[offset:offset+len(self.key)]:
+                row_strs.append('%2s' % c)
+            print '|'.join(row_strs)
+            offset += len(self.key)
+    def encode(self, msg, verbose=False):
+        if verbose:
+            self.show_encode(msg)
+        offsets = self.get_key_order()
+        result = ''
+        for offset in offsets:
+            index = offset
+            while index < len(msg):
+                result += msg[index]
+                index += len(self.key) 
+        return result
+
 def sequentialize(phrase, modreduce=True):
     result_prime = [None] * len(phrase)
     pre_sorted = [None] * len(phrase)
@@ -119,9 +158,21 @@ def test_checkerboard(verbose=True):
     log(ct)
     pt = board.decode(ct)
     log(pt)
+
+def test_transposition(verbose=True):
+    key = IntKey.from_number_string('1234567890')
+    tkey = IntKey()
+    tkey._key = [10,9,8,7,6,5,4,3,2,1]
+    board = StraddlingCheckerboard(key)
+    transpose = Transposition(tkey)
+    test_phrase = 'THEQUICKBROWNFOXJUMPEDOVERTHELAZYDOG'
+    pt = board.encode(test_phrase)
+    ct = transpose.encode(pt, verbose)
+    print ct
 all_tests = [
          test_sequentialize,
-         test_checkerboard
+         test_checkerboard,
+         test_transposition,
          ]
 def testall(verbose=True):
     for test in all_tests:
