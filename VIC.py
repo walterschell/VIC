@@ -111,6 +111,21 @@ class Transposition:
                 index += len(self.key) 
         return result
 
+    def decode(self, msg, verbose=False):
+        result = [''] * len(msg)
+        offsets = self.get_key_order()
+        input_index =0
+        offset_index = 0
+        while input_index < len(msg):
+            output_index = offsets[offset_index]
+            while output_index < len(msg):
+                result[output_index] = msg[input_index]
+                input_index+=1
+                output_index += len(offsets)
+            offset_index += 1
+        return ''.join(result)
+
+
 def sequentialize(phrase, modreduce=True):
     result_prime = [None] * len(phrase)
     pre_sorted = [None] * len(phrase)
@@ -168,7 +183,10 @@ def test_transposition(verbose=True):
     test_phrase = 'THEQUICKBROWNFOXJUMPEDOVERTHELAZYDOG'
     pt = board.encode(test_phrase)
     ct = transpose.encode(pt, verbose)
-    print ct
+    log(ct)
+    test_pt = transpose.decode(ct)
+    log(test_pt)
+    log(board.decode(test_pt))
 all_tests = [
          test_sequentialize,
          test_checkerboard,
